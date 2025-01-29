@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Nueva Entrada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Añadir Nueva Entrada</h1>
+    <form id="new-entry-form">
+        <label for="post_title">Título:</label>
+        <input type="text" id="post_title" name="post_title" required>
+
+        <label for="post_author">Autor:</label>
+        <input type="text" id="post_author" name="post_author" required>
+
+        <label for="post_date">Fecha:</label>
+        <input type="date" id="post_date" name="post_date" required>
+
+        <label for="post_excerpt">Extracto:</label>
+        <textarea id="post_excerpt" name="post_excerpt" rows="3"></textarea>
+
+        <label for="post_content">Contenido:</label>
+        <textarea id="post_content" name="post_content" rows="10" required></textarea>
+
+        <button type="submit">Guardar Entrada</button>
+    </form>
+
+    <div id="message"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('new-entry-form');
+            let entries = [];
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                // Crear la nueva entrada
+                const newEntry = {
+                    ID: Date.now().toString(),
+                    post_author: document.getElementById('post_author').value,
+                    post_date: document.getElementById('post_date').value,
+                    post_title: document.getElementById('post_title').value,
+                    post_excerpt: document.getElementById('post_excerpt').value || "",
+                    post_content: document.getElementById('post_content').value,
+                    post_status: "publish",
+                    post_modified: new Date().toISOString()
+                };
+
+                // Agregar la entrada al arreglo
+                entries.push(newEntry);
+
+                // Crear un archivo JSON para descargar
+                const jsonBlob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+                const jsonUrl = URL.createObjectURL(jsonBlob);
+
+                // Crear un enlace para descargar el archivo
+                const downloadLink = document.createElement('a');
+                downloadLink.href = jsonUrl;
+                downloadLink.download = "entradas.json"; // Siempre usa el mismo nombre
+                downloadLink.style.display = 'none';
+
+                // Agregar el enlace al documento y simular el clic
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+
+                // Eliminar el enlace después de la descarga
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(jsonUrl);
+
+                // Mensaje de confirmación
+                document.getElementById('message').textContent = "Entrada guardada correctamente. Descargado como 'entradas.json'.";
+                form.reset();
+            });
+        });
+    </script>
+</body>
+</html>
