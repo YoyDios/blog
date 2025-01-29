@@ -90,7 +90,8 @@
                 blogEntryDiv.appendChild(date);
 
                 const excerpt = document.createElement('p');
-                excerpt.textContent = entry.post_excerpt || 'Sin extracto disponible';
+                const maxLength = 30; // Número máximo de caracteres para el extracto
+                excerpt.textContent = entry.post_excerpt || (entry.post_content ? entry.post_content.substring(0, maxLength) + '...' : 'Sin contenido disponible');
                 blogEntryDiv.appendChild(excerpt);
 
                 blogContainer.appendChild(blogEntryDiv);
