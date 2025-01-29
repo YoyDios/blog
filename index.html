@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoyDios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #5ba7bd;
+            color: #184b6b;
+            padding: 1rem;
+            text-align: center;
+        }
+        .blog-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+        .blog-entry {
+            background-color: white;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: block; /* Asegura que todo el div sea un bloque */
+            text-decoration: none; /* Elimina el subrayado del enlace */
+            color: inherit; /* Mantiene el color de texto original */
+        }
+        .blog-entry:hover {
+            background-color: #e8f5e9; /* Color de fondo cuando el usuario pasa el ratón */
+        }
+        .blog-entry h2 {
+            margin: 0;
+        }
+        .blog-entry .date {
+            font-size: 0.9rem;
+            color: gray;
+        }
+        .blog-entry .author {
+            font-size: 0.9rem;
+            color: gray;
+        }
+        .blog-entry p {
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>YoyDios</h1>
+</header>
+
+<div class="blog-container" id="blog-container">
+    <!-- Las entradas del blog se cargarán aquí dinámicamente -->
+</div>
+<div class="misco" id="misco"></div>
+
+<script>
+    async function loadBlogEntries() {
+        const blogContainer = document.getElementById('blog-container');
+
+        try {
+            // Cargar el índice de archivos JSON
+            const indexResponse = await fetch('./Entradas/indice.json');
+            if (!indexResponse.ok) {
+                throw new Error('No se pudo cargar el índice de entradas.');
+            }
+
+            const files = await indexResponse.json(); // Lista de archivos JSON
+            console.log('Archivos en el índice:', files); // Depuración
+
+            let allEntries = [];
+
+            // Iterar sobre los archivos JSON y cargar su contenido
+            for (const file of files) {
+                const fileResponse = await fetch(`./Entradas/${file}`);
+                if (!fileResponse.ok) {
+                    console.error(`No se pudo cargar el archivo ${file}`);
+                    continue;
+                }
+
+                const entries = await fileResponse.json(); // Contenido del archivo
+                console.log(`Cargando entradas de ${file}:`, entries); // Depuración
+
+                allEntries = allEntries.concat(entries); // Combinar todas las entradas
+            }
+
+            // Filtrar solo las entradas publicadas y eliminar duplicados por ID
+            const publishedEntries = allEntries
+                .filter(entry => entry.post_status === "publish") // Filtrar publicadas
+                .reduce((uniqueEntries, currentEntry) => {
+                    // Revisar si ya existe una entrada con el mismo ID
+                    const existing = uniqueEntries.find(e => e.ID === currentEntry.ID);
+                    if (!existing || new Date(currentEntry.post_modified) > new Date(existing.post_modified)) {
+                        // Mantener la entrada más reciente si hay duplicados
+                        return uniqueEntries.filter(e => e.ID !== currentEntry.ID).concat(currentEntry);
+                    }
+                    return uniqueEntries;
+                }, []);
+
+            // Ordenar las entradas publicadas por fecha (de más reciente a más antigua)
+            publishedEntries.sort((a, b) => new Date(b.post_date) - new Date(a.post_date));
+
+            // Renderizar las entradas filtradas
+            publishedEntries.forEach((entry, index) => {
+                console.log(`Procesando entrada ${index + 1}:`, entry); // Depuración
+
+                const blogEntryDiv = document.createElement('a');
+                blogEntryDiv.classList.add('blog-entry');
+                blogEntryDiv.href = `plantilla-entrada.html?ID=${entry.ID}`;
+
+                // Agregar título
+                const title = document.createElement('h2');
+                title.textContent = entry.post_title || "Título no disponible";
+                blogEntryDiv.appendChild(title);
+
+                // Agregar autor
+                const author = document.createElement('div');
+                author.classList.add('author');
+                author.textContent = `Autor: ${entry.post_author || "Desconocido"}`;
+                blogEntryDiv.appendChild(author);
+
+                // Agregar fecha
+                const date = document.createElement('div');
+                date.classList.add('date');
+                date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
+                blogEntryDiv.appendChild(date);
+
+                // Agregar extracto o generar un resumen
+                const excerpt = document.createElement('p');
+                if (entry.post_excerpt && entry.post_excerpt.trim()) {
+                    excerpt.textContent = entry.post_excerpt;
+                } else {
+                    // Generar resumen a partir del contenido
+                    const summary = entry.post_content
+                        ? entry.post_content.replace(/<[^>]*>/g, "").slice(0, 200) + "..."
+                        : "Sin extracto disponible.";
+                    excerpt.textContent = summary;
+                }
+                blogEntryDiv.appendChild(excerpt);
+
+                blogContainer.appendChild(blogEntryDiv);
+            });
+        } catch (error) {
+            console.error('Error al cargar las entradas del blog:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadBlogEntries);
+</script>
+
+
+
+
+
+
+</body>
+</html>

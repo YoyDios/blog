@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada del Blog</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .entry-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .entry-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .entry-date {
+            font-size: 1rem;
+            color: gray;    
+        }
+        .entry-author {
+            font-size: 1rem;
+            color: gray;
+        }
+        .entry-content {
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Entrada del Blog</h1>
+</header>
+
+<div class="entry-container" id="entry-container">
+    <!-- El contenido de la entrada se cargará aquí dinámicamente -->
+</div>
+
+<script>
+    async function loadEntry() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('ID'); // Cambiado de 'file' e 'index' a 'ID'
+
+        if (!id) {
+            console.error('No se proporcionó el parámetro ID adecuado.');
+            return;
+        }
+
+        try {
+            // Cargar el índice de archivos JSON
+            const indexResponse = await fetch('./Entradas/indice.json');
+            if (!indexResponse.ok) {
+                throw new Error('No se pudo cargar el índice de entradas.');
+            }
+
+            const files = await indexResponse.json(); // Lista de archivos JSON
+            console.log('Archivos en el índice:', files); // Depuración
+
+            let entryFound = null;
+
+            // Iterar sobre los archivos JSON para encontrar la entrada correspondiente
+            for (const file of files) {
+                const fileResponse = await fetch(`./Entradas/${file}`);
+                if (!fileResponse.ok) {
+                    console.error(`No se pudo cargar el archivo ${file}`);
+                    continue;
+                }
+
+                const entries = await fileResponse.json();
+
+                // Buscar la entrada con el ID correspondiente
+                entryFound = entries.find(entry => entry.ID === id);
+                if (entryFound) break; // Detener la búsqueda si se encuentra la entrada
+            }
+
+            if (entryFound) {
+                const entryContainer = document.getElementById('entry-container');
+
+                const title = document.createElement('h2');
+                title.classList.add('entry-title');
+                title.textContent = entryFound.post_title || "Título no disponible";
+                entryContainer.appendChild(title);
+
+                const date = document.createElement('div');
+                date.classList.add('entry-date');
+                date.textContent = `Publicado el: ${new Date(entryFound.post_date).toLocaleDateString()}`;
+                entryContainer.appendChild(date);
+
+                const author = document.createElement('div');
+                author.classList.add('entry-author');
+                author.textContent = `Autor: ${entryFound.post_author || "Desconocido"}`;
+                entryContainer.appendChild(author);
+
+                const content = document.createElement('div');
+                content.classList.add('entry-content');
+                content.innerHTML = entryFound.post_content || "Contenido no disponible.";
+                entryContainer.appendChild(content);
+            } else {
+                console.error('No se encontró la entrada con el ID proporcionado.');
+            }
+        } catch (error) {
+            console.error('Error al cargar la entrada:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadEntry);
+</script>
+
+
+</body>
+</html>
