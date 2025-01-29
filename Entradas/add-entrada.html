@@ -64,47 +64,36 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('new-entry-form');
-            let entries = [];
-
-            form.addEventListener('submit', function (event) {
+            
+            form.addEventListener('submit', async function (event) {
                 event.preventDefault();
 
-                // Crear la nueva entrada
                 const newEntry = {
-                    ID: Date.now().toString(),
+                    post_title: document.getElementById('post_title').value,
                     post_author: document.getElementById('post_author').value,
                     post_date: document.getElementById('post_date').value,
-                    post_title: document.getElementById('post_title').value,
                     post_excerpt: document.getElementById('post_excerpt').value || "",
                     post_content: document.getElementById('post_content').value,
-                    post_status: "publish",
-                    post_modified: new Date().toISOString()
+                    post_status: "publish"
                 };
 
-                // Agregar la entrada al arreglo
-                entries.push(newEntry);
+                try {
+                    const response = await fetch('https://blog-yxl3.onrender.com/api/entries', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newEntry)
+                    });
 
-                // Crear un archivo JSON para descargar
-                const jsonBlob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
-                const jsonUrl = URL.createObjectURL(jsonBlob);
+                    if (!response.ok) {
+                        throw new Error('Error al guardar la entrada');
+                    }
 
-                // Crear un enlace para descargar el archivo
-                const downloadLink = document.createElement('a');
-                downloadLink.href = jsonUrl;
-                downloadLink.download = "entradas.json"; // Siempre usa el mismo nombre
-                downloadLink.style.display = 'none';
-
-                // Agregar el enlace al documento y simular el clic
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-
-                // Eliminar el enlace después de la descarga
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(jsonUrl);
-
-                // Mensaje de confirmación
-                document.getElementById('message').textContent = "Entrada guardada correctamente. Descargado como 'entradas.json'.";
-                form.reset();
+                    document.getElementById('message').textContent = "Entrada guardada correctamente.";
+                    form.reset();
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('message').textContent = "Error al guardar la entrada.";
+                }
             });
         });
     </script>
