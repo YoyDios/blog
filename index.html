@@ -90,8 +90,22 @@
                 blogEntryDiv.appendChild(date);
 
                 const excerpt = document.createElement('p');
-                const maxLength = 30; // Número máximo de caracteres para el extracto
-                excerpt.textContent = entry.post_excerpt || (entry.post_content ? entry.post_content.substring(0, maxLength) + '...' : 'Sin contenido disponible');
+                const maxLength = 100; // Número máximo de caracteres
+                
+                if (entry.post_excerpt) {
+                    excerpt.textContent = entry.post_excerpt;
+                } else if (entry.post_content) {
+                    // Crear un elemento temporal para eliminar etiquetas HTML
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = entry.post_content;
+                    const plainText = tempDiv.textContent || tempDiv.innerText;
+                
+                    // Tomar solo los primeros caracteres y agregar "..."
+                    excerpt.textContent = plainText.substring(0, maxLength) + '...';
+                } else {
+                    excerpt.textContent = 'Sin contenido disponible';
+                }
+                
                 blogEntryDiv.appendChild(excerpt);
 
                 blogContainer.appendChild(blogEntryDiv);
