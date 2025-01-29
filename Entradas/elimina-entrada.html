@@ -7,73 +7,128 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
         }
-        form {
-            max-width: 600px;
-            margin: 0 auto;
+        header {
+            background-color: #5ba7bd;
+            color: #184b6b;
+            padding: 1rem;
+            text-align: center;
         }
-        label {
-            display: block;
-            margin-top: 10px;
+        .blog-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
         }
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            box-sizing: border-box;
+        .blog-entry {
+            background-color: white;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        button {
+        .blog-entry h2 {
+            margin: 0;
+        }
+        .blog-entry .date, .blog-entry .author {
+            font-size: 0.9rem;
+            color: gray;
+        }
+        .delete-button {
             background-color: #dc3545;
             color: white;
             border: none;
+            padding: 10px;
             cursor: pointer;
+            border-radius: 5px;
         }
-        button:hover {
+        .delete-button:hover {
             background-color: #a71d2a;
-        }
-        #message {
-            margin-top: 20px;
-            font-weight: bold;
         }
     </style>
 </head>
 <body>
+
+<header>
     <h1>Eliminar Entrada</h1>
-    <form id="delete-entry-form">
-        <label for="entry_id">ID de la Entrada:</label>
-        <input type="text" id="entry_id" name="entry_id" required>
+</header>
 
-        <button type="submit">Eliminar Entrada</button>
-    </form>
+<div class="blog-container" id="blog-container">
+    <!-- Las entradas del blog se cargarán aquí dinámicamente -->
+</div>
 
-    <div id="message"></div>
+<script>
+    async function loadBlogEntries() {
+        const blogContainer = document.getElementById('blog-container');
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('delete-entry-form');
+        try {
+            const response = await fetch('https://blog-yxl3.onrender.com/api/entries');
+            if (!response.ok) {
+                throw new Error('No se pudo cargar las entradas.');
+            }
             
-            form.addEventListener('submit', async function (event) {
-                event.preventDefault();
-                const entryId = document.getElementById('entry_id').value;
+            const entries = await response.json();
+            blogContainer.innerHTML = '';
 
-                try {
-                    const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${entryId}`, {
-                        method: 'DELETE',
-                    });
+            entries.forEach(entry => {
+                const blogEntryDiv = document.createElement('div');
+                blogEntryDiv.classList.add('blog-entry');
+                
+                const contentDiv = document.createElement('div');
+                
+                const title = document.createElement('h2');
+                title.textContent = entry.post_title;
+                contentDiv.appendChild(title);
 
-                    if (!response.ok) {
-                        throw new Error('Error al eliminar la entrada');
-                    }
+                const author = document.createElement('div');
+                author.classList.add('author');
+                author.textContent = `Autor: ${entry.post_author}`;
+                contentDiv.appendChild(author);
 
-                    document.getElementById('message').textContent = "Entrada eliminada correctamente.";
-                    form.reset();
-                } catch (error) {
-                    console.error('Error:', error);
-                    document.getElementById('message').textContent = "Error al eliminar la entrada.";
-                }
+                const date = document.createElement('div');
+                date.classList.add('date');
+                date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
+                contentDiv.appendChild(date);
+
+                blogEntryDiv.appendChild(contentDiv);
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-button');
+                deleteButton.textContent = 'Eliminar Entrada';
+                deleteButton.onclick = () => deleteEntry(entry._id);
+                
+                blogEntryDiv.appendChild(deleteButton);
+                blogContainer.appendChild(blogEntryDiv);
             });
-        });
-    </script>
+        } catch (error) {
+            console.error('Error al cargar las entradas:', error);
+        }
+    }
+
+    async function deleteEntry(entryId) {
+        try {
+            const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${entryId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al eliminar la entrada');
+            }
+
+            alert("Entrada eliminada correctamente.");
+            loadBlogEntries();
+        } catch (error) {
+            console.error('Error:', error);
+            alert("Error al eliminar la entrada.");
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadBlogEntries);
+</script>
 </body>
 </html>
