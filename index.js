@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors({
-    origin: 'https://yoydios.github.io',  // Reemplaza con la URL de tu frontend
+    origin: 'https://yoydios.github.io/blog/',  // Reemplaza con la URL de tu frontend
     methods: 'GET,POST',
     allowedHeaders: 'Content-Type'
 }));
