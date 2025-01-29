@@ -22,7 +22,20 @@ mongoose.connect(process.env.MONGO_URI, {
 })
 .then(() => console.log('MongoDB conectado'))
 .catch(err => console.error('Error al conectar con MongoDB:', err));
+//Delete esquema
+const deletedBlogSchema = new mongoose.Schema({
+    original_id: mongoose.Schema.Types.ObjectId,
+    post_title: String,
+    post_author: String,
+    post_date: Date,
+    post_excerpt: String,
+    post_content: String,
+    post_status: String,
+    post_modified: Date,
+    deleted_at: { type: Date, default: Date.now }
+});
 
+const DeletedEntry = mongoose.model('DeletedEntry', deletedBlogSchema);
 // Definir esquema y modelo de entrada de blog
 const blogSchema = new mongoose.Schema({
     post_title: String,
@@ -70,14 +83,31 @@ app.post('/api/entries', async (req, res) => {
 // Ruta para eliminar una entrada por ID
 app.delete('/api/entries/:id', async (req, res) => {
     try {
-        const deletedEntry = await BlogEntry.findByIdAndDelete(req.params.id);
-        if (!deletedEntry) {
+        const entry = await BlogEntry.findById(req.params.id);
+        if (!entry) {
             return res.status(404).json({ error: "Entrada no encontrada" });
         }
-        res.json({ message: "Entrada eliminada correctamente" });
+
+        // Guardar en la colección de backups
+        await DeletedEntry.create({
+            original_id: entry._id,
+            post_title: entry.post_title,
+            post_author: entry.post_author,
+            post_date: entry.post_date,
+            post_excerpt: entry.post_excerpt,
+            post_content: entry.post_content,
+            post_status: entry.post_status,
+            post_modified: entry.post_modified,
+        });
+
+        // Eliminar la entrada original
+        await BlogEntry.findByIdAndDelete(req.params.id);
+
+        res.json({ message: "Entrada eliminada y respaldada correctamente" });
     } catch (err) {
         res.status(500).json({ error: "Error al eliminar la entrada" });
     }
 });
+
 
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
