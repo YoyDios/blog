@@ -4,6 +4,11 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+app.use(cors({
+    origin: 'https://yoydios.github.io',  // Reemplaza con la URL de tu frontend
+    methods: 'GET,POST',
+    allowedHeaders: 'Content-Type'
+}));
 const PORT = process.env.PORT || 3000;
 
 // Middleware
