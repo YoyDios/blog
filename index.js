@@ -5,8 +5,8 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors({
-    origin: ['https://yoydios.github.io', 'https://yoydios.github.io/blog/'],  // Reemplaza con la URL de tu frontend
-    methods: 'GET,POST',
+    origin: ['https://yoydios.github.io', 'https://yoydios.github.io/blog/'],
+    methods: 'GET,POST,DELETE',
     allowedHeaders: 'Content-Type'
 }));
 const PORT = process.env.PORT || 3000;
@@ -65,6 +65,18 @@ app.post('/api/entries', async (req, res) => {
         res.status(201).json(newEntry);
     } catch (err) {
         res.status(500).json({ error: "Error al guardar la entrada" });
+    }
+});
+// Ruta para eliminar una entrada por ID
+app.delete('/api/entries/:id', async (req, res) => {
+    try {
+        const deletedEntry = await BlogEntry.findByIdAndDelete(req.params.id);
+        if (!deletedEntry) {
+            return res.status(404).json({ error: "Entrada no encontrada" });
+        }
+        res.json({ message: "Entrada eliminada correctamente" });
+    } catch (err) {
+        res.status(500).json({ error: "Error al eliminar la entrada" });
     }
 });
 
