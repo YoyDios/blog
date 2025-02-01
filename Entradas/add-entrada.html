@@ -64,7 +64,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('new-entry-form');
-            
+
             form.addEventListener('submit', async function (event) {
                 event.preventDefault();
 
@@ -90,12 +90,21 @@
 
                     document.getElementById('message').textContent = "Entrada guardada correctamente.";
                     form.reset();
+                    await triggerDeploy();
                 } catch (error) {
                     console.error('Error:', error);
                     document.getElementById('message').textContent = "Error al guardar la entrada.";
                 }
             });
         });
+
+        async function triggerDeploy() {
+            try {
+                await fetch("https://api.render.com/deploy/srv-cud31q5umphs73dfodbg?key=RbLk3zWv8p8", { method: "POST" });
+            } catch (error) {
+                console.error("Error al activar el deploy:", error);
+            }
+        }
     </script>
 </body>
 </html>
