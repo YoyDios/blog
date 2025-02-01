@@ -84,11 +84,10 @@
     let totalEntries = [];
 
     async function loadBlogEntries() {
-        const blogContainer = document.getElementById('blog-container');
         try {
-            const response = await fetch('https://blog-yxl3.onrender.com/api/entries');
+            const response = await fetch('./Entradas/entries.json'); // Cargar JSON desde la carpeta Entradas
             if (!response.ok) {
-                throw new Error('No se pudo cargar las entradas.');
+                throw new Error('No se pudo cargar el archivo JSON.');
             }
             totalEntries = await response.json();
             displayEntries();
@@ -107,7 +106,7 @@
         paginatedEntries.forEach(entry => {
             const blogEntryDiv = document.createElement('a');
             blogEntryDiv.classList.add('blog-entry');
-            blogEntryDiv.href = `plantilla-entrada.html?ID=${entry._id}`;
+            blogEntryDiv.href = `plantilla-entrada.html?ID=${entry.id}`;
 
             const title = document.createElement('h2');
             title.textContent = entry.post_title;
