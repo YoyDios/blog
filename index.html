@@ -45,6 +45,22 @@
         .blog-entry p {
             margin-top: 0.5rem;
         }
+        .pagination {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .pagination button {
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            background-color: #5ba7bd;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .pagination button:disabled {
+            background-color: #ccc;
+        }
     </style>
 </head>
 <body>
@@ -56,64 +72,90 @@
 <div class="blog-container" id="blog-container">
     <!-- Las entradas del blog se cargarán aquí dinámicamente -->
 </div>
+<div class="pagination">
+    <button id="prevPage" disabled>Anterior</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">Siguiente</button>
+</div>
 
 <script>
+    let currentPage = 1;
+    const entriesPerPage = 10;
+    let totalEntries = [];
+
     async function loadBlogEntries() {
         const blogContainer = document.getElementById('blog-container');
-
         try {
             const response = await fetch('https://blog-yxl3.onrender.com/api/entries');
             if (!response.ok) {
                 throw new Error('No se pudo cargar las entradas.');
             }
-            
-            const entries = await response.json();
-            blogContainer.innerHTML = '';
-
-            entries.forEach(entry => {
-                const blogEntryDiv = document.createElement('a');
-                blogEntryDiv.classList.add('blog-entry');
-                blogEntryDiv.href = `plantilla-entrada.html?ID=${entry._id}`;
-
-                const title = document.createElement('h2');
-                title.textContent = entry.post_title;
-                blogEntryDiv.appendChild(title);
-
-                const author = document.createElement('div');
-                author.classList.add('author');
-                author.textContent = `Autor: ${entry.post_author}`;
-                blogEntryDiv.appendChild(author);
-
-                const date = document.createElement('div');
-                date.classList.add('date');
-                date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
-                blogEntryDiv.appendChild(date);
-
-                const excerpt = document.createElement('p');
-                const maxLength = 100; // Número máximo de caracteres
-                
-                if (entry.post_excerpt) {
-                    excerpt.textContent = entry.post_excerpt;
-                } else if (entry.post_content) {
-                    // Crear un elemento temporal para eliminar etiquetas HTML
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = entry.post_content;
-                    const plainText = tempDiv.textContent || tempDiv.innerText;
-                
-                    // Tomar solo los primeros caracteres y agregar "..."
-                    excerpt.textContent = plainText.substring(0, maxLength) + '...';
-                } else {
-                    excerpt.textContent = 'Sin contenido disponible';
-                }
-                
-                blogEntryDiv.appendChild(excerpt);
-
-                blogContainer.appendChild(blogEntryDiv);
-            });
+            totalEntries = await response.json();
+            displayEntries();
         } catch (error) {
             console.error('Error al cargar las entradas:', error);
         }
     }
+
+    function displayEntries() {
+        const blogContainer = document.getElementById('blog-container');
+        blogContainer.innerHTML = '';
+        const start = (currentPage - 1) * entriesPerPage;
+        const end = start + entriesPerPage;
+        const paginatedEntries = totalEntries.slice(start, end);
+
+        paginatedEntries.forEach(entry => {
+            const blogEntryDiv = document.createElement('a');
+            blogEntryDiv.classList.add('blog-entry');
+            blogEntryDiv.href = `plantilla-entrada.html?ID=${entry._id}`;
+
+            const title = document.createElement('h2');
+            title.textContent = entry.post_title;
+            blogEntryDiv.appendChild(title);
+
+            const author = document.createElement('div');
+            author.classList.add('author');
+            author.textContent = `Autor: ${entry.post_author}`;
+            blogEntryDiv.appendChild(author);
+
+            const date = document.createElement('div');
+            date.classList.add('date');
+            date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
+            blogEntryDiv.appendChild(date);
+
+            const excerpt = document.createElement('p');
+            const maxLength = 100;
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = entry.post_content || '';
+            const plainText = tempDiv.textContent || tempDiv.innerText;
+            excerpt.textContent = (entry.post_excerpt || plainText.substring(0, maxLength) + '...');
+            blogEntryDiv.appendChild(excerpt);
+
+            blogContainer.appendChild(blogEntryDiv);
+        });
+
+        updatePagination();
+    }
+
+    function updatePagination() {
+        document.getElementById('pageInfo').textContent = `Página ${currentPage} de ${Math.ceil(totalEntries.length / entriesPerPage)}`;
+        document.getElementById('prevPage').disabled = currentPage === 1;
+        document.getElementById('nextPage').disabled = currentPage * entriesPerPage >= totalEntries.length;
+    }
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            displayEntries();
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+        if (currentPage * entriesPerPage < totalEntries.length) {
+            currentPage++;
+            displayEntries();
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', loadBlogEntries);
 </script>
