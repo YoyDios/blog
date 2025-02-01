@@ -60,7 +60,7 @@
         const blogContainer = document.getElementById('blog-container');
 
         try {
-            const response = await fetch('/Entradas/entries.json');
+            const response = await fetch('entries.json');
             if (!response.ok) {
                 throw new Error('No se pudo cargar las entradas.');
             }
