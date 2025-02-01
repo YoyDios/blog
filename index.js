@@ -12,7 +12,7 @@ app.use(cors({
 const PORT = process.env.PORT || 3000;
 const GITHUB_REPO = "yoydios/blog";
 const FILE_PATH = "Entradas/entries.json";
-const GITHUB_TOKEN = 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;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/${FILE_PATH}`;
 
 app.use(express.json());
