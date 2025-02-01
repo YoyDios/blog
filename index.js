@@ -1,6 +1,6 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -10,104 +10,54 @@ app.use(cors({
     allowedHeaders: 'Content-Type'
 }));
 const PORT = process.env.PORT || 3000;
+const GITHUB_REPO = "yoydios/blog";
+const FILE_PATH = "Entradas/entries.json";
+const GITHUB_TOKEN = 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;
+const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/${FILE_PATH}`;
 
-// Middleware
 app.use(express.json());
-app.use(cors());
 
-// Conectar a MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB conectado'))
-.catch(err => console.error('Error al conectar con MongoDB:', err));
-//Delete esquema
-const deletedBlogSchema = new mongoose.Schema({
-    original_id: mongoose.Schema.Types.ObjectId,
-    post_title: String,
-    post_author: String,
-    post_date: Date,
-    post_excerpt: String,
-    post_content: String,
-    post_status: String,
-    post_modified: Date,
-    deleted_at: { type: Date, default: Date.now }
-});
-
-const DeletedEntry = mongoose.model('DeletedEntry', deletedBlogSchema);
-// Definir esquema y modelo de entrada de blog
-const blogSchema = new mongoose.Schema({
-    post_title: String,
-    post_author: String,
-    post_date: Date,
-    post_excerpt: String,
-    post_content: String,
-    post_status: { type: String, default: "publish" },
-    post_modified: { type: Date, default: Date.now }
-});
-
-const BlogEntry = mongoose.model('BlogEntry', blogSchema);
-
-// Ruta para obtener todas las entradas
-app.get('/api/entries', async (req, res) => {
+async function getFileContent() {
     try {
-        const entries = await BlogEntry.find({ post_status: "publish" }).sort({ post_date: -1 });
-        res.json(entries);
-    } catch (err) {
-        res.status(500).json({ error: "Error al obtener las entradas" });
-    }
-});
-
-// Ruta para obtener una entrada por ID
-app.get('/api/entries/:id', async (req, res) => {
-    try {
-        const entry = await BlogEntry.findById(req.params.id);
-        if (!entry) return res.status(404).json({ error: "Entrada no encontrada" });
-        res.json(entry);
-    } catch (err) {
-        res.status(500).json({ error: "Error al obtener la entrada" });
-    }
-});
-
-// Ruta para agregar una nueva entrada
-app.post('/api/entries', async (req, res) => {
-    try {
-        const newEntry = new BlogEntry(req.body);
-        await newEntry.save();
-        res.status(201).json(newEntry);
-    } catch (err) {
-        res.status(500).json({ error: "Error al guardar la entrada" });
-    }
-});
-// Ruta para eliminar una entrada por ID
-app.delete('/api/entries/:id', async (req, res) => {
-    try {
-        const entry = await BlogEntry.findById(req.params.id);
-        if (!entry) {
-            return res.status(404).json({ error: "Entrada no encontrada" });
-        }
-
-        // Guardar en la colección de backups
-        await DeletedEntry.create({
-            original_id: entry._id,
-            post_title: entry.post_title,
-            post_author: entry.post_author,
-            post_date: entry.post_date,
-            post_excerpt: entry.post_excerpt,
-            post_content: entry.post_content,
-            post_status: entry.post_status,
-            post_modified: entry.post_modified,
+        const response = await axios.get(GITHUB_API_URL, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
         });
-
-        // Eliminar la entrada original
-        await BlogEntry.findByIdAndDelete(req.params.id);
-
-        res.json({ message: "Entrada eliminada y respaldada correctamente" });
-    } catch (err) {
-        res.status(500).json({ error: "Error al eliminar la entrada" });
+        const content = Buffer.from(response.data.content, 'base64').toString('utf-8');
+        return { content: JSON.parse(content), sha: response.data.sha };
+    } catch (error) {
+        return { content: [], sha: null };
     }
+}
+
+async function updateFileContent(newContent, sha) {
+    const encodedContent = Buffer.from(JSON.stringify(newContent, null, 2)).toString('base64');
+    await axios.put(GITHUB_API_URL, {
+        message: "Update entries.json",
+        content: encodedContent,
+        sha,
+    }, {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+}
+
+app.get('/api/entries', async (req, res) => {
+    const { content } = await getFileContent();
+    res.json(content);
 });
 
+app.post('/api/entries', async (req, res) => {
+    const { content, sha } = await getFileContent();
+    const newEntry = { id: Date.now(), ...req.body };
+    content.push(newEntry);
+    await updateFileContent(content, sha);
+    res.status(201).json(newEntry);
+});
+
+app.delete('/api/entries/:id', async (req, res) => {
+    const { content, sha } = await getFileContent();
+    const newContent = content.filter(entry => entry.id !== parseInt(req.params.id));
+    await updateFileContent(newContent, sha);
+    res.json({ message: "Entrada eliminada correctamente" });
+});
 
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
