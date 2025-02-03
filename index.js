@@ -6,7 +6,7 @@ require('dotenv').config();
 const app = express();
 app.use(cors({
     origin: ['https://yoydios.github.io', 'https://yoydios.github.io/blog/'],
-    methods: 'GET,POST,DELETE',
+    methods: 'GET,POST,PUT,DELETE',
     allowedHeaders: 'Content-Type'
 }));
 const PORT = process.env.PORT || 3000;
