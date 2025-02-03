@@ -113,7 +113,7 @@
         paginatedEntries.forEach(entry => {
             const blogEntryDiv = document.createElement('a');
             blogEntryDiv.classList.add('blog-entry');
-            blogEntryDiv.href = `plantilla-entrada.html?ID=${entry.id}`;
+            blogEntryDiv.href = `plantilla-entrada.html?ID=${entry.ID}`;
 
             const title = document.createElement('h2');
             title.textContent = entry.post_title;
