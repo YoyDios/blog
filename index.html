@@ -89,7 +89,14 @@
             if (!response.ok) {
                 throw new Error('No se pudo cargar el archivo JSON.');
             }
-            totalEntries = await response.json();
+            const entries = await response.json();
+
+            // Filtrar para obtener solo las entradas con "post_status": "publish"
+            const publishedEntries = entries.filter(entry => entry.post_status === "publish");
+
+            // Ordenar las entradas de forma descendente según la fecha (más recientes primero)
+            totalEntries = publishedEntries.sort((a, b) => new Date(b.post_date) - new Date(a.post_date));
+
             displayEntries();
         } catch (error) {
             console.error('Error al cargar las entradas:', error);
