@@ -1,97 +1,114 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrada del Blog</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-        }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-        }
-        .entry-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 1rem;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .entry-title {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-        .entry-date, .entry-author {
-            font-size: 1rem;
-            color: gray;
-        }
-        .entry-content {
-            font-size: 1.1rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrada del Blog</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .entry-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .entry-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .entry-date, .entry-author {
+      font-size: 1rem;
+      color: gray;
+      margin-bottom: 0.5rem;
+    }
+    .entry-content {
+      font-size: 1.1rem;
+      margin-top: 1rem;
+    }
+  </style>
 </head>
 <body>
 
 <header>
-    <h1>Entrada del Blog</h1>
+  <h1>Entrada del Blog</h1>
 </header>
 
 <div class="entry-container" id="entry-container">
-    <!-- El contenido de la entrada se cargará aquí dinámicamente -->
+  <!-- El contenido de la entrada se cargará aquí dinámicamente -->
 </div>
 
 <script>
-    async function loadEntry() {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('ID');
+  async function loadEntry() {
+    // Obtener el parámetro "ID" de la URL (en mayúsculas, según el formato de tu JSON)
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('ID');
 
-        if (!id) {
-            console.error('No se proporcionó el parámetro ID adecuado.');
-            return;
-        }
-
-        try {
-            const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${id}`);
-            if (!response.ok) {
-                throw new Error('No se pudo cargar la entrada.');
-            }
-            
-            const entry = await response.json();
-            const entryContainer = document.getElementById('entry-container');
-
-            const title = document.createElement('h2');
-            title.classList.add('entry-title');
-            title.textContent = entry.post_title;
-            entryContainer.appendChild(title);
-
-            const date = document.createElement('div');
-            date.classList.add('entry-date');
-            date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
-            entryContainer.appendChild(date);
-
-            const author = document.createElement('div');
-            author.classList.add('entry-author');
-            author.textContent = `Autor: ${entry.post_author}`;
-            entryContainer.appendChild(author);
-
-            const content = document.createElement('div');
-            content.classList.add('entry-content');
-            content.innerHTML = entry.post_content;
-            entryContainer.appendChild(content);
-        } catch (error) {
-            console.error('Error al cargar la entrada:', error);
-        }
+    if (!id) {
+      console.error('No se proporcionó el parámetro ID adecuado.');
+      return;
     }
 
-    document.addEventListener('DOMContentLoaded', loadEntry);
+    try {
+      // Se obtienen todas las entradas desde el endpoint
+      const response = await fetch('https://blog-yxl3.onrender.com/api/entries');
+      if (!response.ok) {
+        throw new Error('No se pudo cargar las entradas.');
+      }
+      
+      const entries = await response.json();
+      // Buscar la entrada cuyo "ID" coincida con el parámetro
+      const entry = entries.find(e => e.ID === id);
+      
+      if (!entry) {
+        throw new Error('Entrada no encontrada.');
+      }
+
+      const entryContainer = document.getElementById('entry-container');
+      entryContainer.innerHTML = ''; // Limpiar contenido previo
+
+      // Crear y agregar el título
+      const title = document.createElement('h2');
+      title.classList.add('entry-title');
+      title.textContent = entry.post_title;
+      entryContainer.appendChild(title);
+
+      // Crear y agregar la fecha
+      const date = document.createElement('div');
+      date.classList.add('entry-date');
+      date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
+      entryContainer.appendChild(date);
+
+      // Crear y agregar el autor
+      const author = document.createElement('div');
+      author.classList.add('entry-author');
+      author.textContent = `Autor: ${entry.post_author}`;
+      entryContainer.appendChild(author);
+
+      // Crear y agregar el contenido
+      const content = document.createElement('div');
+      content.classList.add('entry-content');
+      content.innerHTML = entry.post_content;
+      entryContainer.appendChild(content);
+
+    } catch (error) {
+      console.error('Error al cargar la entrada:', error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadEntry);
 </script>
 
 </body>
