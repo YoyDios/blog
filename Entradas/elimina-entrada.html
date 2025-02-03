@@ -1,135 +1,153 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Despublicar Entrada</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-        }
-        header {
-            background-color: #5ba7bd;
-            color: #184b6b;
-            padding: 1rem;
-            text-align: center;
-        }
-        .blog-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 1rem;
-        }
-        .blog-entry {
-            background-color: white;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .action-button {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .action-button:hover {
-            background-color: #a71d2a;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Despublicar Entrada</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+    header {
+      background-color: #5ba7bd;
+      color: #184b6b;
+      padding: 1rem;
+      text-align: center;
+    }
+    .blog-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    .blog-entry {
+      background-color: white;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .action-button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .action-button:hover {
+      background-color: #a71d2a;
+    }
+  </style>
 </head>
 <body>
 
 <header>
-    <h1>Despublicar Entrada</h1>
+  <h1>Despublicar Entrada</h1>
 </header>
 
 <div class="blog-container" id="blog-container">
-    <!-- Las entradas del blog se cargarán aquí dinámicamente -->
+  <!-- Las entradas se cargarán aquí dinámicamente -->
 </div>
 
 <script>
-    async function loadBlogEntries() {
-        const blogContainer = document.getElementById('blog-container');
+  async function loadBlogEntries() {
+    const blogContainer = document.getElementById('blog-container');
 
-        try {
-            const response = await fetch('entries.json');
-            if (!response.ok) {
-                throw new Error('No se pudo cargar las entradas.');
-            }
-            
-            const entries = await response.json();
-            blogContainer.innerHTML = '';
+    try {
+      const response = await fetch('entries.json');
+      if (!response.ok) {
+        throw new Error('No se pudo cargar las entradas.');
+      }
+      
+      // Obtener y ordenar las entradas (más recientes primero)
+      let entries = await response.json();
+      entries.sort((a, b) => new Date(b.post_date) - new Date(a.post_date));
+      
+      blogContainer.innerHTML = '';
 
-            entries.forEach(entry => {
-                const blogEntryDiv = document.createElement('div');
-                blogEntryDiv.classList.add('blog-entry');
-
-                const title = document.createElement('h2');
-                title.textContent = entry.post_title;
-
-                const author = document.createElement('div');
-                author.textContent = `Autor: ${entry.post_author}`;
-
-                const date = document.createElement('div');
-                date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
-
-                // Cambiar el texto del botón y la función para despublicar la entrada
-                const unpublishButton = document.createElement('button');
-                unpublishButton.classList.add('action-button');
-                unpublishButton.textContent = 'Despublicar Entrada';
-                unpublishButton.onclick = async () => {
-                    await unpublishEntry(entry._id);
-                    triggerDeploy();
-                };
-
-                blogEntryDiv.append(title, author, date, unpublishButton);
-                blogContainer.appendChild(blogEntryDiv);
-            });
-        } catch (error) {
-            console.error('Error al cargar las entradas:', error);
+      entries.forEach(entry => {
+        // Usamos entry.ID como identificador, según tu JSON de referencia
+        const entryId = entry.ID;
+        if (!entryId) {
+          console.error('La entrada no tiene identificador:', entry);
+          return;
         }
+
+        const blogEntryDiv = document.createElement('div');
+        blogEntryDiv.classList.add('blog-entry');
+
+        const title = document.createElement('h2');
+        title.textContent = entry.post_title;
+
+        const author = document.createElement('div');
+        author.textContent = `Autor: ${entry.post_author}`;
+
+        const date = document.createElement('div');
+        date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
+
+        const unpublishButton = document.createElement('button');
+        unpublishButton.classList.add('action-button');
+        unpublishButton.textContent = 'Despublicar Entrada';
+        unpublishButton.onclick = async () => {
+          await unpublishEntry(entryId);
+          triggerDeploy();
+        };
+
+        blogEntryDiv.append(title, author, date, unpublishButton);
+        blogContainer.appendChild(blogEntryDiv);
+      });
+    } catch (error) {
+      console.error('Error al cargar las entradas:', error);
     }
+  }
 
-    // Función para actualizar la entrada y cambiar su estado a "unpublish"
-    async function unpublishEntry(entryId) {
-        try {
-            const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${entryId}`, {
-                method: 'PUT', // o PATCH según lo que espere tu API
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ post_status: 'unpublish' })
-            });
-
-            if (!response.ok) {
-                throw new Error('Error al actualizar la entrada');
-            }
-
-            alert("Entrada despublicada correctamente.");
-            loadBlogEntries();
-        } catch (error) {
-            console.error('Error:', error);
-            alert("Error al despublicar la entrada.");
-        }
+  // Función para actualizar la entrada y cambiar su estado a "unpublish"
+  async function unpublishEntry(entryId) {
+    if (!entryId) {
+      console.error('entryId es undefined');
+      return;
     }
+    try {
+      const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${entryId}`, {
+        method: 'PUT', // O PATCH, según lo que espere tu API
+        mode: 'cors',  // Asegúrate de que el servidor permita este origen y método
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ post_status: 'unpublish' })
+      });
 
-    async function triggerDeploy() {
-        try {
-            await fetch("https://api.render.com/deploy/srv-cud31q5umphs73dfodbg?key=RbLk3zWv8p8", { method: "POST" });
-        } catch (error) {
-            console.error("Error al activar el deploy:", error);
-        }
+      if (!response.ok) {
+        throw new Error('Error al actualizar la entrada');
+      }
+
+      alert("Entrada despublicada correctamente.");
+      loadBlogEntries();
+    } catch (error) {
+      console.error('Error:', error);
+      alert("Error al despublicar la entrada.");
     }
+  }
 
-    document.addEventListener('DOMContentLoaded', loadBlogEntries);
+  async function triggerDeploy() {
+    try {
+      // Se usa mode: 'no-cors' para evitar problemas de CORS en el endpoint de deploy.
+      await fetch("https://api.render.com/deploy/srv-cud31q5umphs73dfodbg?key=RbLk3zWv8p8", {
+        method: "POST",
+        mode: "no-cors"
+      });
+    } catch (error) {
+      console.error("Error al activar el deploy:", error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadBlogEntries);
 </script>
 </body>
 </html>
