@@ -107,33 +107,30 @@
     }
   }
 
-  // Función para actualizar la entrada y cambiar su estado a "unpublish"
-  async function unpublishEntry(entryId) {
-    if (!entryId) {
-      console.error('entryId es undefined');
-      return;
-    }
+  // En el cliente, cuando se invoca la función unpublishEntry:
+async function unpublishEntry(entryId) {
     try {
-      const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${entryId}`, {
-        method: 'PUT', // O PATCH, según lo que espere tu API
-        mode: 'cors',  // Asegúrate de que el servidor permita este origen y método
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ post_status: 'unpublish' })
-      });
+        const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${entryId}`, {
+            method: 'PUT', // Método para actualizar
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ post_status: 'unpublish' })
+        });
 
-      if (!response.ok) {
-        throw new Error('Error al actualizar la entrada');
-      }
+        if (!response.ok) {
+            throw new Error('Error al actualizar la entrada');
+        }
 
-      alert("Entrada despublicada correctamente.");
-      loadBlogEntries();
+        alert("Entrada despublicada correctamente.");
+        loadBlogEntries();
     } catch (error) {
-      console.error('Error:', error);
-      alert("Error al despublicar la entrada.");
+        console.error('Error:', error);
+        alert("Error al despublicar la entrada.");
     }
-  }
+}
+
 
   async function triggerDeploy() {
     try {
