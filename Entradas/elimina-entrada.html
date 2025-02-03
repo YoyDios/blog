@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eliminar Entrada</title>
+    <title>Despublicar Entrada</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -32,7 +32,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        .delete-button {
+        .action-button {
             background-color: #dc3545;
             color: white;
             border: none;
@@ -40,7 +40,7 @@
             cursor: pointer;
             border-radius: 5px;
         }
-        .delete-button:hover {
+        .action-button:hover {
             background-color: #a71d2a;
         }
     </style>
@@ -48,7 +48,7 @@
 <body>
 
 <header>
-    <h1>Eliminar Entrada</h1>
+    <h1>Despublicar Entrada</h1>
 </header>
 
 <div class="blog-container" id="blog-container">
@@ -81,15 +81,16 @@
                 const date = document.createElement('div');
                 date.textContent = `Publicado el: ${new Date(entry.post_date).toLocaleDateString()}`;
 
-                const deleteButton = document.createElement('button');
-                deleteButton.classList.add('delete-button');
-                deleteButton.textContent = 'Eliminar Entrada';
-                deleteButton.onclick = async () => {
-                    await deleteEntry(entry._id);
+                // Cambiar el texto del botón y la función para despublicar la entrada
+                const unpublishButton = document.createElement('button');
+                unpublishButton.classList.add('action-button');
+                unpublishButton.textContent = 'Despublicar Entrada';
+                unpublishButton.onclick = async () => {
+                    await unpublishEntry(entry._id);
                     triggerDeploy();
                 };
 
-                blogEntryDiv.append(title, author, date, deleteButton);
+                blogEntryDiv.append(title, author, date, unpublishButton);
                 blogContainer.appendChild(blogEntryDiv);
             });
         } catch (error) {
@@ -97,21 +98,26 @@
         }
     }
 
-    async function deleteEntry(entryId) {
+    // Función para actualizar la entrada y cambiar su estado a "unpublish"
+    async function unpublishEntry(entryId) {
         try {
             const response = await fetch(`https://blog-yxl3.onrender.com/api/entries/${entryId}`, {
-                method: 'DELETE',
+                method: 'PUT', // o PATCH según lo que espere tu API
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ post_status: 'unpublish' })
             });
 
             if (!response.ok) {
-                throw new Error('Error al eliminar la entrada');
+                throw new Error('Error al actualizar la entrada');
             }
 
-            alert("Entrada eliminada correctamente.");
+            alert("Entrada despublicada correctamente.");
             loadBlogEntries();
         } catch (error) {
             console.error('Error:', error);
-            alert("Error al eliminar la entrada.");
+            alert("Error al despublicar la entrada.");
         }
     }
 
