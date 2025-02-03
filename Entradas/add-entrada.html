@@ -68,7 +68,9 @@
             form.addEventListener('submit', async function (event) {
                 event.preventDefault();
 
+                // Se crea la nueva entrada incluyendo la propiedad "ID" en mayúsculas
                 const newEntry = {
+                    ID: Date.now().toString(), // Se genera un ID único en formato string
                     post_title: document.getElementById('post_title').value,
                     post_author: document.getElementById('post_author').value,
                     post_date: document.getElementById('post_date').value,
